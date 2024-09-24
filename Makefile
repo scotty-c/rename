@@ -5,7 +5,7 @@ PROJECT_NAME = rename
 
 build:
 	@echo "Building $(PROJECT_NAME)..."
-	@go build -o $(PROJECT_NAME) main.go
+	@go build -o ./bin/$(PROJECT_NAME) main.go
 
 clean:
 	@echo "Cleaning up..."
