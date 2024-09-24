@@ -1,4 +1,4 @@
-module rename
+module github.com/scotty-c/rename
 
 go 1.21.6
 

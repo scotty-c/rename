@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"rename/internal/rename"
+	"github.com/scotty-c/rename/internal/rename"
 
 	"github.com/spf13/cobra"
 )
