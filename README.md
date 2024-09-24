@@ -1,7 +1,7 @@
 
 # Rename CLI
 
-`rename` is a simple Golang command-line tool that reads a file and replaces specific strings based on a list of replacements defined in a YAML configuration file.
+`rename` is a simple Golang command-line tool that reads a file or folder and replaces specific strings based on a list of replacements defined in a YAML configuration file.
 
 ## Features
 - Replace multiple strings in a file based on predefined pairs.
@@ -47,7 +47,7 @@
 2. Run the `rename` command:
 
    ```bash
-   ./rename <file-to-process>
+   ./rename <file-or-folder-to-process>
    ```
 
    This will process the specified file, replacing the strings as per the configuration.
