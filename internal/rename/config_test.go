@@ -2,57 +2,47 @@ package rename
 
 import (
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/spf13/viper"
 )
 
-func TestLoadConfigWithFakeHome(t *testing.T) {
-	//Create a temporary directory to mock the home directory
-	fakeHomeDir, err := os.MkdirTemp("", "fakeHomeDir")
-	if err != nil {
-		t.Fatal(err)
-	}
-	// Clean up the temporary directory after the test
-	defer os.RemoveAll(fakeHomeDir)
+func TestLoadConfig(t *testing.T) {
+	// Dynamically create the test config file
+	tmpDir := t.TempDir() // Use Go's test temporary directory, which is automatically cleaned up
+	configFilePath := tmpDir + "/conf.yaml"
 
-	//Set the $HOME environment variable to the fake home directory
-	originalHome := os.Getenv("HOME")
-	os.Setenv("HOME", fakeHomeDir)
-	defer os.Setenv("HOME", originalHome) // Restore the original $HOME after the test
-
-	//Create the .rename/conf.yaml file in the fake home directory
-	configDir := filepath.Join(fakeHomeDir, ".rename")
-	err = os.MkdirAll(configDir, 0755) // Create ~/.rename directory
-	if err != nil {
-		t.Fatalf("Failed to create config directory: %v", err)
-	}
-
-	configFilePath := filepath.Join(configDir, "conf.yaml")
-	mockConfig := `
+	// YAML content as a map of strings to strings (key-value pairs)
+	configContent := `
 replacements:
-  dockerhub.io: dockerhub.com
-  quay.io: quay.x
+  "dockerhub.io": "dockerhub.com"
+  "quay.io": "quay.x"
 `
-	err = os.WriteFile(configFilePath, []byte(mockConfig), 0644) // Write conf.yaml
+
+	// Write the config file
+	err := os.WriteFile(configFilePath, []byte(configContent), 0644)
 	if err != nil {
-		t.Fatalf("Failed to write mock config file: %v", err)
+		t.Fatalf("Failed to create config file: %v", err)
 	}
 
-	//Test the LoadConfig function with the mocked $HOME and config file
-	viper.Reset() // Ensure Viper doesn't have any old configuration loaded
-	replacements := LoadConfig()
-
-	// Verify the replacements were loaded correctly
-	expected := map[string]string{
-		"dockerhub.io": "dockerhub.com",
-		"quay.io":      "quay.x",
+	// Set the config file path to the dynamically created file
+	viper.SetConfigFile(configFilePath)
+	err = viper.ReadInConfig()
+	if err != nil {
+		t.Fatalf("Error reading config: %v", err)
 	}
 
-	for key, val := range expected {
-		if replacements[key] != val {
-			t.Errorf("Expected replacement for '%s' to be '%s', but got '%s'", key, val, replacements[key])
-		}
+	replacements, err := LoadConfig()
+	if err != nil {
+		t.Fatalf("Error loading config: %v", err)
+	}
+
+	// Verify the replacements are loaded correctly
+	if replacements["dockerhub.io"] != "dockerhub.com" {
+		t.Errorf("Expected 'dockerhub.com', got '%s'", replacements["dockerhub.io"])
+	}
+
+	if replacements["quay.io"] != "quay.x" {
+		t.Errorf("Expected 'quay.x', got '%s'", replacements["quay.io"])
 	}
 }

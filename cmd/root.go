@@ -4,50 +4,43 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/scotty-c/rename/internal/rename"
-
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
+// rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "rename [file or directory]",
-	Short: "Rename strings in files based on a list of replacements",
-	Args:  cobra.MinimumNArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		path := args[0]
-
-		// Load replacements from Viper
-		replacements := rename.LoadConfig()
-		if replacements == nil {
-			return fmt.Errorf("failed to load config")
-		}
-
-		// Check if the path is a file or directory
-		fileInfo, err := os.Stat(path)
-		if err != nil {
-			return fmt.Errorf("failed to access path: %w", err)
-		}
-
-		if fileInfo.IsDir() {
-			// Process the directory
-			if err := rename.ProcessDirectory(path, replacements); err != nil {
-				return fmt.Errorf("error processing directory: %w", err)
-			}
-		} else {
-			// Process the single file
-			if err := rename.ProcessFile(path, replacements); err != nil {
-				return fmt.Errorf("error processing file: %w", err)
-			}
-		}
-
-		fmt.Println("Replacements applied successfully!")
-		return nil
-	},
+	Use:   "rename",
+	Short: "A CLI tool to search and replace strings in files",
+	Long:  `rename is a CLI tool for searching and replacing strings in files and directories based on a configuration file.`,
 }
 
+// Execute adds all child commands to the root command and sets flags appropriately.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println("Error:", err)
-		os.Exit(1) // Exit gracefully with a non-zero status code
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
+
+func init() {
+	cobra.OnInitialize(initConfig)
+}
+
+// initConfig reads the config file from ~/.rename/conf.yaml.
+func initConfig() {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Println("Error finding home directory:", err)
+		os.Exit(1)
+	}
+
+	viper.AddConfigPath(fmt.Sprintf("%s/.rename", home))
+	viper.SetConfigName("conf")
+	viper.SetConfigType("yaml")
+
+	if err := viper.ReadInConfig(); err != nil {
+		fmt.Println("Error reading config file:", err)
+		os.Exit(1)
 	}
 }

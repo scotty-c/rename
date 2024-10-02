@@ -1,33 +1,32 @@
 package rename
 
 import (
-	"log"
-	"os"
+	"fmt"
 
 	"github.com/spf13/viper"
 )
 
-// LoadConfig loads the replacement configuration from the YAML file
-func LoadConfig() map[string]string {
-	// Setup Viper
-	home, err := os.UserHomeDir()
+// LoadConfig loads the replacement pairs from the configuration file.
+func LoadConfig() (map[string]string, error) {
+	var config map[string]string
+	err := viper.UnmarshalKey("replacements", &config)
 	if err != nil {
-		log.Fatalf("Unable to find home directory: %v", err)
+		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
+	return config, nil
+}
 
-	viper.SetConfigName("conf")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath(home + "/.rename")
-
-	err = viper.ReadInConfig()
+// LoadConfigKeys loads only the search keys from the configuration file.
+func LoadConfigKeys() ([]string, error) {
+	replacements, err := LoadConfig()
 	if err != nil {
-		log.Fatalf("Error reading config file: %v", err)
+		return nil, err
 	}
 
-	replacements := viper.GetStringMapString("replacements")
-	if len(replacements) == 0 {
-		log.Fatal("No replacements found in config")
+	var keys []string
+	for key := range replacements {
+		keys = append(keys, key)
 	}
 
-	return replacements
+	return keys, nil
 }

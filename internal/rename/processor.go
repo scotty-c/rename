@@ -1,48 +1,72 @@
 package rename
 
 import (
-	"log"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-// ProcessFile processes a single file, performing the replacements
-func ProcessFile(filePath string, replacements map[string]string) error {
-	// Read the file content
-	content, err := os.ReadFile(filePath)
-	if err != nil {
-		return err
-	}
-
-	updatedContent := string(content)
-	for old, new := range replacements {
-		updatedContent = strings.ReplaceAll(updatedContent, old, new)
-	}
-
-	// Write the updated content back to the file
-	err = os.WriteFile(filePath, []byte(updatedContent), 0644)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// ProcessDirectory recursively processes files in a directory
-func ProcessDirectory(dirPath string, replacements map[string]string) error {
-	// Walk through files in the directory
-	err := filepath.Walk(dirPath, func(filePath string, info os.FileInfo, err error) error {
+// SearchFilesInDirectory searches for files containing search keys.
+func SearchFilesInDirectory(directory string, searchKeys []string) ([]string, error) {
+	var matchingFiles []string
+	err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
-		// Only process regular files
 		if !info.IsDir() {
-			log.Printf("Processing file: %s", filePath)
-			return ProcessFile(filePath, replacements)
+			content, err := os.ReadFile(path)
+			if err != nil {
+				return err
+			}
+
+			for _, key := range searchKeys {
+				if strings.Contains(string(content), key) {
+					matchingFiles = append(matchingFiles, path)
+					break
+				}
+			}
 		}
 		return nil
 	})
-	return err
+
+	return matchingFiles, err
+}
+
+// ProcessDirectory applies replacements recursively in a directory or to a single file.
+func ProcessDirectory(directory string, replacements map[string]string) error {
+	return filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if !info.IsDir() {
+			err := processFile(path, replacements)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+// processFile applies replacements in a single file.
+func processFile(filePath string, replacements map[string]string) error {
+	input, err := os.ReadFile(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to read file %s: %w", filePath, err)
+	}
+
+	content := string(input)
+	for oldStr, newStr := range replacements {
+		content = strings.ReplaceAll(content, oldStr, newStr)
+	}
+
+	err = os.WriteFile(filePath, []byte(content), 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write to file %s: %w", filePath, err)
+	}
+
+	return nil
 }

@@ -1,70 +1,112 @@
-
 # Rename CLI
 
-`rename` is a simple Golang command-line tool that reads a file or folder and replaces specific strings based on a list of replacements defined in a YAML configuration file.
+`rename` is a Golang-based command-line application that provides two key functionalities:
+1. **Search**: Searches for specific strings in files or directories based on a configuration file.
+2. **Change**: Replaces specific strings in files or directories with alternative strings, as specified in the configuration file.
+
+The configuration for search-and-replace operations is stored in a YAML file located at `~/.rename/conf.yaml`.
 
 ## Features
-- Replace multiple strings in a file based on predefined pairs.
-- Configuration file stored in `~/.rename/conf.yaml`.
+
+- Recursively searches through directories for specific strings.
+- Replaces found strings with their replacements.
+- Supports custom string replacement configurations via YAML.
+- Two main commands: `search` and `change`.
 
 ## Installation
 
-1. Clone the repository and navigate into the directory:
+1. Clone the repository:
+
    ```bash
    git clone https://github.com/scotty-c/rename.git
+   ```
+
+2. Navigate to the project directory:
+
+   ```bash
    cd rename
    ```
 
-2. Install the required dependencies:
-   ```bash
-   go get -u github.com/spf13/cobra
-   go get -u github.com/spf13/viper
-   ```
-
-3. Build the project:
-   ```bash
-   go build -o rename
-   ```
-
-4. Create the configuration file:
-   ```bash
-   mkdir -p ~/.rename
-   touch ~/.rename/conf.yaml
-   ```
-
-## Usage
-
-1. Add your replacements to the configuration file (`~/.rename/conf.yaml`):
-
-   Example:
-   ```yaml
-   replacements:
-     dockerhub.io: dockerhub.com
-     quay.io: quay.x
-     example.org: example.com
-   ```
-
-2. Run the `rename` command:
+3. Build the CLI:
 
    ```bash
-   ./rename <file-or-folder-to-process>
+   make build
    ```
 
-   This will process the specified file, replacing the strings as per the configuration.
+4. (Optional) Move the binary to your system's PATH:
+
+   ```bash
+   sudo mv rename /usr/local/bin/
+   ```
 
 ## Configuration
 
-The configuration file is located at `~/.rename/conf.yaml`. It contains key-value pairs under the `replacements` section, where the key is the string to be replaced, and the value is the new string.
-
-Example configuration:
+The configuration file is located at `~/.rename/conf.yaml` and defines the strings to search for and their replacements. The file should follow this format:
 
 ```yaml
 replacements:
-  old-string: new-string
-  example.com: example.org
+  "dockerhub.io": "dockerhub.com"
+  "quay.io": "quay.x"
 ```
+
+Each entry under `replacements` is a key-value pair where the key is the string to search for and the value is the replacement string.
+
+## Usage
+
+The CLI supports two commands:
+
+### 1. `rename search <file or directory>`
+
+Searches for specific strings in the provided file or directory based on the `conf.yaml` configuration.
+
+#### Example:
+
+```bash
+rename search /path/to/file.txt
+rename search /path/to/directory
+```
+
+### 2. `rename change <file or directory>`
+
+Replaces specific strings in the provided file or directory with their corresponding replacements as defined in the `conf.yaml` file.
+
+#### Example:
+
+```bash
+rename change /path/to/file.txt
+rename change /path/to/directory
+```
+
+## Running Tests
+
+You can run tests for the project using the following command:
+
+```bash
+make test
+```
+
+The tests will dynamically create a temporary configuration file for testing purposes and will clean it up afterward.
+
+## Development
+
+### Project Structure
+
+The project follows the best practices for Go CLI applications by separating the core logic into the `internal` package. The key files are:
+
+- **cmd/root.go**: Defines the main `rename` commands (`search` and `change`).
+- **internal/config.go**: Handles loading the configuration from the `~/.rename/conf.yaml` file.
+- **internal/processor.go**: Handles file searching and string replacements.
+- **internal/config_test.go**: Unit tests for configuration loading.
+- **internal/processor_test.go**: Unit tests for file searching and processing.
+
+### Contributing
+
+1. Fork the repository.
+2. Create your feature branch: `git checkout -b my-new-feature`
+3. Commit your changes: `git commit -am 'Add some feature'`
+4. Push to the branch: `git push origin my-new-feature`
+5. Submit a pull request.
 
 ## License
 
 This project is licensed under the MIT License.
-
